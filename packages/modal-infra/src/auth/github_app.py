@@ -14,6 +14,10 @@ import time
 import httpx
 import jwt
 
+from ..log_config import get_logger
+
+log = get_logger("auth.github_app")
+
 
 def generate_jwt(app_id: str, private_key: str) -> str:
     """
@@ -69,8 +73,22 @@ def _normalize_pem_key(private_key: str) -> str:
     This handles keys stored in CI secrets or environment variables where
     newlines get replaced with literal backslash-n strings.
     """
-    if "\\n" in private_key:
+    key_header = private_key.split("\n")[0] if "\n" in private_key else private_key[:60]
+    was_escaped = "\\n" in private_key
+
+    if was_escaped:
         private_key = private_key.replace("\\n", "\n")
+        log.debug("github.key_normalized", was_escaped=True, key_header=key_header)
+    else:
+        log.debug("github.key_normalized", was_escaped=False, key_header=key_header)
+
+    if not private_key.startswith("-----BEGIN"):
+        log.warn(
+            "github.key_missing_header",
+            key_prefix=private_key[:100],
+            key_length=len(private_key),
+        )
+
     return private_key.strip()
 
 
@@ -99,5 +117,24 @@ def generate_installation_token(
         jwt.PyJWTError: If JWT encoding fails
     """
     private_key = _normalize_pem_key(private_key)
-    jwt_token = generate_jwt(app_id, private_key)
+
+    key_header = private_key.split("\n")[0] if "\n" in private_key else private_key[:50]
+    log.debug(
+        "github.jwt_attempt", app_id=app_id, key_header=key_header, key_length=len(private_key)
+    )
+
+    try:
+        jwt_token = generate_jwt(app_id, private_key)
+    except jwt.exceptions.InvalidKeyError as e:
+        log.error(
+            "github.jwt_invalid_key",
+            error=str(e),
+            error_type=type(e).__name__,
+            key_header=key_header,
+            key_has_begin=private_key.startswith("-----BEGIN"),
+            key_has_rsa=private_key.__contains__("RSA"),
+            key_has_private=private_key.__contains__("PRIVATE"),
+        )
+        raise
+
     return get_installation_token(jwt_token, installation_id)
