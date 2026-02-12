@@ -91,6 +91,10 @@ slack_signing_secret = ""
 # From: https://console.anthropic.com/
 anthropic_api_key = ""
 
+# Linear API key for Linear MCP integration (optional)
+# From: https://linear.app/settings/api
+# linear_api_key = ""
+
 # =============================================================================
 # Security Secrets
 # =============================================================================
