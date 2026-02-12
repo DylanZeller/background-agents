@@ -23,8 +23,8 @@ SANDBOX_DIR = Path(__file__).parent.parent / "sandbox"
 OPENCODE_VERSION = "latest"
 
 # Cache buster - change this to force Modal image rebuild
-# v37: Codex auth proxy plugin for centralized token refresh
-CACHE_BUSTER = "v37-codex-auth-proxy-plugin"
+# v38: Fixed fastapi[standard] for web endpoints
+CACHE_BUSTER = "v38-fastapi-standard-fix"
 
 # Base image with all development tools
 base_image = (

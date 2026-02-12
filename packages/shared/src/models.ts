@@ -10,9 +10,14 @@
  * All models use "provider/model" format.
  */
 export const VALID_MODELS = [
+  // Anthropic Models (Default - using for reliability)
   "anthropic/claude-haiku-4-5",
   "anthropic/claude-sonnet-4-5",
   "anthropic/claude-opus-4-5",
+  // OpenCode Zen Free Models (Available as alternatives)
+  "opencode/glm-4.7-free",
+  "opencode/kimi-k2.5-free",
+  // OpenAI Models (paid - available if needed)
   "openai/gpt-5.2",
   "openai/gpt-5.2-codex",
   "openai/gpt-5.3-codex",
@@ -22,6 +27,7 @@ export type ValidModel = (typeof VALID_MODELS)[number];
 
 /**
  * Default model to use when none specified or invalid.
+ * Defaulting to Claude Haiku 4.5 for reliability.
  */
 export const DEFAULT_MODEL: ValidModel = "anthropic/claude-haiku-4-5";
 
@@ -44,9 +50,14 @@ export interface ModelReasoningConfig {
  * Models not listed here do not support reasoning controls.
  */
 export const MODEL_REASONING_CONFIG: Partial<Record<ValidModel, ModelReasoningConfig>> = {
+  // Anthropic models
   "anthropic/claude-haiku-4-5": { efforts: ["high", "max"], default: "max" },
   "anthropic/claude-sonnet-4-5": { efforts: ["high", "max"], default: "max" },
   "anthropic/claude-opus-4-5": { efforts: ["high", "max"], default: "max" },
+  // OpenCode Zen Free models
+  "opencode/glm-4.7-free": { efforts: ["low", "medium", "high"], default: "medium" },
+  "opencode/kimi-k2.5-free": { efforts: ["low", "medium", "high"], default: "medium" },
+  // OpenAI models (paid)
   "openai/gpt-5.2": { efforts: ["none", "low", "medium", "high", "xhigh"], default: undefined },
   "openai/gpt-5.2-codex": { efforts: ["low", "medium", "high", "xhigh"], default: "high" },
   "openai/gpt-5.3-codex": { efforts: ["low", "medium", "high", "xhigh"], default: "high" },
@@ -68,7 +79,7 @@ export interface ModelCategory {
  */
 export const MODEL_OPTIONS: ModelCategory[] = [
   {
-    category: "Anthropic",
+    category: "Anthropic (Default)",
     models: [
       {
         id: "anthropic/claude-haiku-4-5",
@@ -88,7 +99,22 @@ export const MODEL_OPTIONS: ModelCategory[] = [
     ],
   },
   {
-    category: "OpenAI",
+    category: "OpenCode Zen Free (Alternative)",
+    models: [
+      {
+        id: "opencode/glm-4.7-free",
+        name: "GLM 4.7 Free",
+        description: "Free general purpose model",
+      },
+      {
+        id: "opencode/kimi-k2.5-free",
+        name: "Kimi K2.5 Free",
+        description: "Free coding optimized model",
+      },
+    ],
+  },
+  {
+    category: "OpenAI (Paid)",
     models: [
       { id: "openai/gpt-5.2", name: "GPT 5.2", description: "400K context, fast" },
       { id: "openai/gpt-5.2-codex", name: "GPT 5.2 Codex", description: "Optimized for code" },

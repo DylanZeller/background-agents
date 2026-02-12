@@ -17,5 +17,11 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 # This makes all web endpoints and functions available
 from src.app import app
 
+# Import modules that register functions with the app
+# These imports are necessary for Modal to discover the endpoints
+from src import web_api  # Registers HTTP endpoints
+from src import functions  # Registers regular functions
+from src.scheduler import image_builder  # Registers scheduler functions
+
 # Re-export the app for Modal
 __all__ = ["app"]

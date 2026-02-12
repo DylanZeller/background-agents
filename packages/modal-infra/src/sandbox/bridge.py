@@ -641,6 +641,11 @@ class AgentBridge:
                         "reasoningEffort": reasoning_effort,
                         "reasoningSummary": "auto",
                     }
+                elif provider_id == "opencode":
+                    # OpenCode Zen uses standard reasoningEffort parameter
+                    model_spec["options"] = {
+                        "reasoningEffort": reasoning_effort,
+                    }
 
             request_body["model"] = model_spec
 

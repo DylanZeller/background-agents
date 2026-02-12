@@ -22,7 +22,7 @@ app = modal.App("open-inspect")
 function_image = modal.Image.debian_slim(python_version="3.12").pip_install(
     "pydantic>=2.0",
     "httpx",
-    "fastapi",
+    "fastapi[standard]",  # Required for web endpoints
     "modal",  # Required for sandbox.manager imports
     "PyJWT[crypto]",  # For GitHub App token generation
 )

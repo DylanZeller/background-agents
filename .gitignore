@@ -87,3 +87,7 @@ terraform.rc
 
 # Internal docs (kept locally)
 docs/internal/
+
+# Setup documentation with secrets
+GITHUB_SECRETS_SETUP.md
+.env.setup
