@@ -276,6 +276,19 @@ class SandboxSupervisor:
             },
         }
 
+        # Add Linear MCP server if API key is available (via repo secrets)
+        linear_api_key = os.environ.get("LINEAR_API_KEY")
+        if linear_api_key:
+            opencode_config["mcp"] = {
+                "linear": {
+                    "type": "remote",
+                    "url": "https://mcp.linear.app/mcp",
+                    "headers": {
+                        "Authorization": f"Bearer {linear_api_key}"
+                    },
+                }
+            }
+
         # Determine working directory - use repo path if cloned, otherwise /workspace
         workdir = self.workspace_path
         if self.repo_path.exists() and (self.repo_path / ".git").exists():
