@@ -10,6 +10,9 @@ Note: Uses lazy imports to avoid pydantic dependency at module load time.
 import os
 
 from .app import app, function_image, github_app_secrets, inspect_volume
+from .log_config import get_logger
+
+log = get_logger("functions")
 
 # Global sandbox manager (lazy loaded)
 _manager = None
@@ -80,9 +83,15 @@ async def create_sandbox(
                 private_key=private_key,
                 installation_id=installation_id,
             )
+        else:
+            log.warn(
+                "github.credentials_missing",
+                has_app_id=bool(app_id),
+                has_private_key=bool(private_key),
+                has_installation_id=bool(installation_id),
+            )
     except Exception as e:
-        # Log but don't fail - public repos can work without token
-        print(f"Warning: Failed to generate GitHub App token: {e}")
+        log.warn("github.token_error", error=str(e), error_type=type(e).__name__)
 
     # Build session config
     git_user = None

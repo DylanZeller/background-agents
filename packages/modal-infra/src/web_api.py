@@ -137,8 +137,15 @@ async def api_create_sandbox(
                     private_key=private_key,
                     installation_id=installation_id,
                 )
+            else:
+                log.warn(
+                    "github.credentials_missing",
+                    has_app_id=bool(app_id),
+                    has_private_key=bool(private_key),
+                    has_installation_id=bool(installation_id),
+                )
         except Exception as e:
-            log.warn("github.token_error", exc=e)
+            log.warn("github.token_error", error=str(e), error_type=type(e).__name__)
 
         # Build session config
         git_user = None
@@ -520,8 +527,15 @@ async def api_restore_sandbox(
                     private_key=private_key,
                     installation_id=installation_id,
                 )
+            else:
+                log.warn(
+                    "github.credentials_missing",
+                    has_app_id=bool(app_id),
+                    has_private_key=bool(private_key),
+                    has_installation_id=bool(installation_id),
+                )
         except Exception as e:
-            log.warn("github.token_error", exc=e)
+            log.warn("github.token_error", error=str(e), error_type=type(e).__name__)
 
         # Restore sandbox from snapshot
         handle = await manager.restore_from_snapshot(
