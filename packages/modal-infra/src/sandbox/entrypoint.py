@@ -12,6 +12,7 @@ Runs as PID 1 inside the sandbox. Responsibilities:
 """
 
 import asyncio
+import contextlib
 import json
 import os
 import shutil
@@ -273,10 +274,8 @@ class SandboxSupervisor:
 
             existing_auth = {}
             if auth_file.exists():
-                try:
+                with contextlib.suppress(json.JSONDecodeError, OSError):
                     existing_auth = json.loads(auth_file.read_text())
-                except (json.JSONDecodeError, OSError):
-                    pass
 
             existing_auth["minimax-coding-plan"] = {
                 "type": "api",
