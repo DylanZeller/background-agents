@@ -12,6 +12,7 @@ Runs as PID 1 inside the sandbox. Responsibilities:
 """
 
 import asyncio
+import contextlib
 import json
 import os
 import shutil
@@ -258,9 +259,44 @@ class SandboxSupervisor:
         except Exception as e:
             self.log.warn("openai_oauth.setup_error", exc=e)
 
+    def _setup_minimax_auth(self) -> None:
+        """Write OpenCode auth.json entry for Minimax Coding Plan API key."""
+        api_key = os.environ.get("MINIMAX_CODING_PLAN_KEY")
+        if not api_key:
+            return
+
+        try:
+            auth_dir = Path.home() / ".local" / "share" / "opencode"
+            auth_dir.mkdir(parents=True, exist_ok=True)
+
+            auth_file = auth_dir / "auth.json"
+            tmp_file = auth_dir / ".auth.json.tmp"
+
+            existing_auth = {}
+            if auth_file.exists():
+                with contextlib.suppress(json.JSONDecodeError, OSError):
+                    existing_auth = json.loads(auth_file.read_text())
+
+            existing_auth["minimax-coding-plan"] = {
+                "type": "api",
+                "key": api_key,
+            }
+
+            fd = os.open(str(tmp_file), os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+            try:
+                os.write(fd, json.dumps(existing_auth).encode())
+            finally:
+                os.close(fd)
+            tmp_file.replace(auth_file)
+
+            self.log.info("minimax_auth.setup")
+        except Exception as e:
+            self.log.warn("minimax_auth.setup_error", exc=e)
+
     async def start_opencode(self) -> None:
         """Start OpenCode server with configuration."""
         self._setup_openai_oauth()
+        self._setup_minimax_auth()
         self.log.info("opencode.start")
 
         # Build OpenCode config from session settings

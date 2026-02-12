@@ -332,8 +332,9 @@ module "modal_app" {
     {
       name = "llm-api-keys"
       values = {
-        ANTHROPIC_API_KEY = var.anthropic_api_key
-        LINEAR_API_KEY    = var.linear_api_key
+        ANTHROPIC_API_KEY       = var.anthropic_api_key
+        LINEAR_API_KEY          = var.linear_api_key
+        MINIMAX_CODING_PLAN_KEY = var.minimax_coding_plan_key
       }
     },
     {
