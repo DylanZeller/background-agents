@@ -278,6 +278,9 @@ class SandboxSupervisor:
 
         # Add Linear MCP server if API key is available (via repo secrets)
         linear_api_key = os.environ.get("LINEAR_API_KEY")
+        self.log.info(
+            f"Linear API key found starts with {linear_api_key[:5] if linear_api_key else 'None'}"
+        )
         if linear_api_key:
             opencode_config["mcp"] = {
                 "linear": {
