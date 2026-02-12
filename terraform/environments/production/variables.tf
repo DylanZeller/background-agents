@@ -113,6 +113,13 @@ variable "anthropic_api_key" {
   sensitive   = true
 }
 
+variable "linear_api_key" {
+  description = "Linear API key for Linear MCP integration (optional)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 # =============================================================================
 # Security Secrets
 # =============================================================================
