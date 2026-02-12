@@ -62,6 +62,18 @@ def get_installation_token(jwt_token: str, installation_id: str) -> str:
         return response.json()["token"]
 
 
+def _normalize_pem_key(private_key: str) -> str:
+    """
+    Normalize a PEM private key that may have literal \\n instead of newlines.
+
+    This handles keys stored in CI secrets or environment variables where
+    newlines get replaced with literal backslash-n strings.
+    """
+    if "\\n" in private_key:
+        private_key = private_key.replace("\\n", "\n")
+    return private_key.strip()
+
+
 def generate_installation_token(
     app_id: str,
     private_key: str,
@@ -86,5 +98,6 @@ def generate_installation_token(
         httpx.HTTPStatusError: If the GitHub API request fails
         jwt.PyJWTError: If JWT encoding fails
     """
+    private_key = _normalize_pem_key(private_key)
     jwt_token = generate_jwt(app_id, private_key)
     return get_installation_token(jwt_token, installation_id)
