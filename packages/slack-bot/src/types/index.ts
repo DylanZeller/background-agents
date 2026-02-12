@@ -155,6 +155,7 @@ export interface CallbackContext {
   model: string;
   reasoningEffort?: string;
   reactionMessageTs?: string;
+  linearIssueIds?: string[];
 }
 
 /**

@@ -20,6 +20,7 @@ import { createClassifier } from "./classifier";
 import { getAvailableRepos } from "./classifier/repos";
 import { callbacksRouter } from "./callbacks";
 import { generateInternalToken } from "./utils/internal";
+import { extractLinearRefs, formatLinearHint } from "./utils/linear";
 import { createLogger } from "./logger";
 import {
   MODEL_OPTIONS,
@@ -550,6 +551,9 @@ async function startSessionAndSendPrompt(
     buildThreadSession(session.sessionId, repo, model, reasoningEffort)
   );
 
+  // Detect Linear issue references in the message and thread context
+  const linearRefs = extractLinearRefs(messageText + (previousMessages?.join(" ") ?? ""));
+
   // Build callback context for follow-up notification
   const callbackContext: CallbackContext = {
     channel,
@@ -557,12 +561,14 @@ async function startSessionAndSendPrompt(
     repoFullName: repo.fullName,
     model,
     reasoningEffort,
+    linearIssueIds: linearRefs.length > 0 ? linearRefs : undefined,
   };
 
   // Build prompt content with channel and thread context if available
+  const linearHint = linearRefs.length > 0 ? formatLinearHint(linearRefs) + "\n\n" : "";
   const channelContext = channelName ? formatChannelContext(channelName, channelDescription) : "";
   const threadContext = previousMessages ? formatThreadContext(previousMessages) : "";
-  const promptContent = channelContext + threadContext + messageText;
+  const promptContent = linearHint + channelContext + threadContext + messageText;
 
   // Send the prompt to the session
   const promptResult = await sendPrompt(
@@ -846,6 +852,10 @@ async function handleAppMention(
   if (thread_ts) {
     const existingSession = await lookupThreadSession(env, channel, thread_ts);
     if (existingSession) {
+      const followUpLinearRefs = extractLinearRefs(
+        messageText + (previousMessages?.join(" ") ?? "")
+      );
+
       const callbackContext: CallbackContext = {
         channel,
         threadTs: thread_ts,
@@ -853,13 +863,16 @@ async function handleAppMention(
         model: existingSession.model,
         reasoningEffort: existingSession.reasoningEffort,
         reactionMessageTs: ts,
+        linearIssueIds: followUpLinearRefs.length > 0 ? followUpLinearRefs : undefined,
       };
 
+      const followUpLinearHint =
+        followUpLinearRefs.length > 0 ? formatLinearHint(followUpLinearRefs) + "\n\n" : "";
       const channelContext = channelName
         ? formatChannelContext(channelName, channelDescription)
         : "";
       const threadContext = previousMessages ? formatThreadContext(previousMessages) : "";
-      const promptContent = channelContext + threadContext + messageText;
+      const promptContent = followUpLinearHint + channelContext + threadContext + messageText;
 
       const promptResult = await sendPrompt(
         env,
