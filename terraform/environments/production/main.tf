@@ -346,8 +346,8 @@ module "modal_app" {
     {
       name = "internal-api"
       values = {
-        MODAL_API_SECRET             = var.modal_api_secret
-        ALLOWED_CONTROL_PLANE_HOSTS  = local.control_plane_host
+        MODAL_API_SECRET            = var.modal_api_secret
+        ALLOWED_CONTROL_PLANE_HOSTS = local.control_plane_host
       }
     }
   ]

@@ -78,16 +78,40 @@ def _normalize_pem_key(private_key: str) -> str:
 
     if was_escaped:
         private_key = private_key.replace("\\n", "\n")
-        log.debug("github.key_normalized", was_escaped=True, key_header=key_header)
+        log.warn("github.key_normalized", was_escaped=True, key_header=key_header)
     else:
-        log.debug("github.key_normalized", was_escaped=False, key_header=key_header)
+        log.warn("github.key_normalized", was_escaped=False, key_header=key_header)
 
-    if not private_key.startswith("-----BEGIN"):
+    # Check key format
+    is_pkcs1 = "-----BEGIN RSA PRIVATE KEY-----" in private_key
+    is_pkcs8 = "-----BEGIN PRIVATE KEY-----" in private_key
+    is_encrypted_pkcs8 = "-----BEGIN ENCRYPTED PRIVATE KEY-----" in private_key
+    has_pem_header = private_key.startswith("-----BEGIN")
+
+    log.warn(
+        "github.key_format_check",
+        is_pkcs1=is_pkcs1,
+        is_pkcs8=is_pkcs8,
+        is_encrypted=is_encrypted_pkcs8,
+        has_pem_header=has_pem_header,
+        key_length=len(private_key),
+        first_line=key_header,
+    )
+
+    # If PEM header is missing, the key was likely stored without it
+    # Try to reconstruct the PEM format by wrapping the base64 content
+    if not has_pem_header:
         log.warn(
             "github.key_missing_header",
-            key_prefix=private_key[:100],
+            key_prefix=repr(private_key[:200]),
             key_length=len(private_key),
+            attempting_reconstruct=True,
         )
+        # Clean up the key content - remove any surrounding whitespace
+        key_content = private_key.strip()
+        # Wrap in PKCS#8 PEM format (most common for GitHub Apps)
+        private_key = f"-----BEGIN PRIVATE KEY-----\n{key_content}\n-----END PRIVATE KEY-----"
+        log.warn("github.key_reconstructed", new_header="-----BEGIN PRIVATE KEY-----")
 
     return private_key.strip()
 
@@ -126,14 +150,20 @@ def generate_installation_token(
     try:
         jwt_token = generate_jwt(app_id, private_key)
     except jwt.exceptions.InvalidKeyError as e:
+        # Determine key format for better diagnostics
+        is_pkcs1 = "-----BEGIN RSA PRIVATE KEY-----" in private_key
+        is_pkcs8 = "-----BEGIN PRIVATE KEY-----" in private_key
+
         log.error(
             "github.jwt_invalid_key",
             error=str(e),
             error_type=type(e).__name__,
             key_header=key_header,
             key_has_begin=private_key.startswith("-----BEGIN"),
-            key_has_rsa=private_key.__contains__("RSA"),
-            key_has_private=private_key.__contains__("PRIVATE"),
+            is_pkcs1=is_pkcs1,
+            is_pkcs8=is_pkcs8,
+            key_length=len(private_key),
+            key_sample=private_key[:100] if len(private_key) > 100 else private_key,
         )
         raise
 
