@@ -95,6 +95,9 @@ anthropic_api_key = ""
 # From: https://linear.app/settings/api
 # linear_api_key = ""
 
+# Minimax Coding Plan API key
+minimax_coding_plan_key = ""
+
 # =============================================================================
 # Security Secrets
 # =============================================================================

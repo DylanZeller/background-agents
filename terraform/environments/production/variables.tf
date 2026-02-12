@@ -120,6 +120,12 @@ variable "linear_api_key" {
   default     = ""
 }
 
+variable "minimax_coding_plan_key" {
+  description = "Minimax Coding Plan API key"
+  type        = string
+  sensitive   = true
+}
+
 # =============================================================================
 # Security Secrets
 # =============================================================================
