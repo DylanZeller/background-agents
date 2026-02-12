@@ -5,6 +5,7 @@ import { SidebarLayout, useSidebarContext } from "@/components/sidebar-layout";
 import { SettingsNav, type SettingsCategory } from "@/components/settings/settings-nav";
 import { SecretsSettings } from "@/components/settings/secrets-settings";
 import { DataControlsSettings } from "@/components/settings/data-controls-settings";
+import { SlackSettings } from "@/components/settings/slack-settings";
 
 export default function SettingsPage() {
   return (
@@ -41,6 +42,7 @@ function SettingsContent() {
           <div className="max-w-2xl">
             {activeCategory === "secrets" && <SecretsSettings />}
             {activeCategory === "data-controls" && <DataControlsSettings />}
+            {activeCategory === "slack" && <SlackSettings />}
           </div>
         </div>
       </div>
