@@ -70,3 +70,23 @@ export async function controlPlaneFetch(
     },
   });
 }
+
+export async function getSlackDefaultModel(): Promise<string> {
+  const response = await controlPlaneFetch("/config/slack-default-model");
+  if (!response.ok) {
+    throw new Error("Failed to get slack default model");
+  }
+  const data = (await response.json()) as { model: string };
+  return data.model;
+}
+
+export async function setSlackDefaultModel(model: string): Promise<void> {
+  const response = await controlPlaneFetch("/config/slack-default-model", {
+    method: "PUT",
+    body: JSON.stringify({ model }),
+  });
+  if (!response.ok) {
+    const data = (await response.json()) as { error?: string };
+    throw new Error(data.error || "Failed to set slack default model");
+  }
+}

@@ -342,6 +342,40 @@ const routes: Route[] = [
     handler: async () => json({ status: "healthy", service: "open-inspect-control-plane" }),
   },
 
+  // Slack bot config (proxy to slack-bot)
+  {
+    method: "GET",
+    pattern: parsePattern("/config/slack-default-model"),
+    handler: async (request, env) => {
+      if (!env.SLACK_BOT) {
+        return error("Slack bot not configured", 500);
+      }
+      const response = await env.SLACK_BOT.fetch("https://internal/config/default-model");
+      const data = await response.json();
+      return json(data);
+    },
+  },
+  {
+    method: "PUT",
+    pattern: parsePattern("/config/slack-default-model"),
+    handler: async (request, env) => {
+      if (!env.SLACK_BOT) {
+        return error("Slack bot not configured", 500);
+      }
+      const body = await request.json();
+      const response = await env.SLACK_BOT.fetch("https://internal/config/default-model", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        return error(data.error || "Failed to set default model", response.status);
+      }
+      return json(data);
+    },
+  },
+
   // Session management
   {
     method: "GET",

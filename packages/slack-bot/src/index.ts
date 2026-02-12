@@ -34,6 +34,24 @@ import {
 
 const log = createLogger("handler");
 
+const DEFAULT_MODEL_KV_KEY = "config:default_model";
+
+async function getDefaultModel(env: Env): Promise<string> {
+  const kvModel = await env.SLACK_KV.get(DEFAULT_MODEL_KV_KEY, "text");
+  if (kvModel && isValidModel(kvModel as Parameters<typeof isValidModel>[0])) {
+    return kvModel;
+  }
+  return env.DEFAULT_MODEL || DEFAULT_MODEL;
+}
+
+async function setDefaultModel(env: Env, model: string): Promise<boolean> {
+  if (!isValidModel(model as Parameters<typeof isValidModel>[0])) {
+    return false;
+  }
+  await env.SLACK_KV.put(DEFAULT_MODEL_KV_KEY, model);
+  return true;
+}
+
 /**
  * Build authenticated headers for control plane requests.
  */
@@ -341,7 +359,7 @@ async function saveUserPreferences(
  */
 async function publishAppHome(env: Env, userId: string): Promise<void> {
   const prefs = await getUserPreferences(env, userId);
-  const fallback = env.DEFAULT_MODEL || DEFAULT_MODEL;
+  const fallback = await getDefaultModel(env);
   // Normalize model to ensure it's valid - UI and behavior will be consistent
   const currentModel = getValidModelOrDefault(prefs?.model ?? fallback);
   const currentModelInfo =
@@ -517,7 +535,7 @@ async function startSessionAndSendPrompt(
 ): Promise<{ sessionId: string } | null> {
   // Fetch user's preferred model and reasoning effort
   const userPrefs = await getUserPreferences(env, userId);
-  const fallback = env.DEFAULT_MODEL || DEFAULT_MODEL;
+  const fallback = await getDefaultModel(env);
   const model = getValidModelOrDefault(userPrefs?.model ?? fallback);
   const reasoningEffort =
     userPrefs?.reasoningEffort && isValidReasoningEffort(model, userPrefs.reasoningEffort)
@@ -628,6 +646,25 @@ app.get("/health", async (c) => {
     service: "open-inspect-slack-bot",
     repoCount,
   });
+});
+
+// Get default model
+app.get("/config/default-model", async (c) => {
+  const model = await getDefaultModel(c.env);
+  return c.json({ model });
+});
+
+// Set default model
+app.post("/config/default-model", async (c) => {
+  const { model } = await c.req.json();
+  if (!model || typeof model !== "string") {
+    return c.json({ error: "model is required" }, 400);
+  }
+  const success = await setDefaultModel(c.env, model);
+  if (!success) {
+    return c.json({ error: "invalid model" }, 400);
+  }
+  return c.json({ success: true, model });
 });
 
 // Slack Events API
@@ -1206,9 +1243,8 @@ async function handleSlackInteraction(
       const selectedEffort = action.selected_option?.value;
       if (selectedEffort && userId) {
         const currentPrefs = await getUserPreferences(env, userId);
-        const currentModel = getValidModelOrDefault(
-          currentPrefs?.model ?? env.DEFAULT_MODEL ?? DEFAULT_MODEL
-        );
+        const defaultModel = await getDefaultModel(env);
+        const currentModel = getValidModelOrDefault(currentPrefs?.model ?? defaultModel);
         if (isValidReasoningEffort(currentModel, selectedEffort)) {
           await saveUserPreferences(env, userId, currentModel, selectedEffort);
           await publishAppHome(env, userId);
