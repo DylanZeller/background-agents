@@ -282,6 +282,7 @@ class SandboxSupervisor:
             opencode_config["mcp"] = {
                 "linear": {
                     "type": "remote",
+                    "enabled": True,
                     "url": "https://mcp.linear.app/mcp",
                     "headers": {"Authorization": f"Bearer {linear_api_key}"},
                 }
