@@ -11,10 +11,10 @@ import { generateInternalToken } from "@open-inspect/shared";
  * Throws if not configured.
  */
 function getControlPlaneUrl(): string {
-  const url = process.env.CONTROL_PLANE_URL;
+  const url = process.env.NEXT_PUBLIC_CONTROL_PLANE_URL;
   if (!url) {
-    console.error("[control-plane] CONTROL_PLANE_URL not configured");
-    throw new Error("CONTROL_PLANE_URL not configured");
+    console.error("[control-plane] NEXT_PUBLIC_CONTROL_PLANE_URL not configured");
+    throw new Error("NEXT_PUBLIC_CONTROL_PLANE_URL not configured");
   }
   return url;
 }
