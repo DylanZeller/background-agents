@@ -2,10 +2,29 @@
 
 import { useState, useEffect } from "react";
 import { MODEL_OPTIONS, DEFAULT_MODEL } from "@open-inspect/shared";
-import { getSlackDefaultModel, setSlackDefaultModel } from "@/lib/control-plane";
 
 function getAllModelOptions() {
   return MODEL_OPTIONS.flatMap((category) => category.models);
+}
+
+async function fetchDefaultModel(): Promise<string> {
+  const response = await fetch("/api/config/slack-default-model");
+  if (!response.ok) {
+    throw new Error("Failed to fetch");
+  }
+  const data = (await response.json()) as { model: string };
+  return data.model;
+}
+
+async function updateDefaultModel(model: string): Promise<void> {
+  const response = await fetch("/api/config/slack-default-model", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ model }),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to update");
+  }
 }
 
 export function SlackSettings() {
@@ -16,7 +35,7 @@ export function SlackSettings() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    getSlackDefaultModel()
+    fetchDefaultModel()
       .then(setCurrentModel)
       .catch(() => {
         // Use default if not configured yet
@@ -30,7 +49,7 @@ export function SlackSettings() {
     setSuccess(false);
 
     try {
-      await setSlackDefaultModel(currentModel);
+      await updateDefaultModel(currentModel);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (e) {
