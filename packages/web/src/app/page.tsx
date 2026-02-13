@@ -301,11 +301,13 @@ function HomeContent({
         </header>
       )}
 
-      <div className="flex-1 flex flex-col items-center justify-center p-8">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8">
         <div className="w-full max-w-2xl">
           {/* Welcome text */}
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-semibold text-foreground mb-2">Welcome to Open-Inspect</h1>
+          <div className="text-center mb-6 sm:mb-8">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-foreground mb-2">
+              Welcome to Open-Inspect
+            </h1>
             {isAuthenticated ? (
               <p className="text-muted-foreground">
                 Ask a question or describe what you want to build
@@ -370,9 +372,9 @@ function HomeContent({
                 </div>
 
                 {/* Footer row with repo and model selectors */}
-                <div className="flex items-center justify-between px-4 py-2 border-t border-border-muted">
+                <div className="flex items-center justify-between px-4 py-2 border-t border-border-muted gap-2 flex-wrap sm:flex-nowrap">
                   {/* Left side - Repo selector + Model selector */}
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2 sm:gap-4 flex-wrap flex-1 min-w-0">
                     {/* Repo selector */}
                     <div className="relative" ref={repoDropdownRef}>
                       <button
@@ -382,12 +384,14 @@ function HomeContent({
                         className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition"
                       >
                         <RepoIcon />
-                        <span>{loadingRepos ? "Loading..." : displayRepoName}</span>
+                        <span className="truncate max-w-[100px] sm:max-w-[150px]">
+                          {loadingRepos ? "Loading..." : displayRepoName}
+                        </span>
                         <ChevronIcon />
                       </button>
 
                       {repoDropdownOpen && repos.length > 0 && (
-                        <div className="absolute bottom-full left-0 mb-2 w-72 max-h-64 overflow-y-auto bg-background shadow-lg border border-border py-1 z-50">
+                        <div className="absolute bottom-full left-0 mb-2 w-64 sm:w-72 max-h-64 overflow-y-auto bg-background shadow-lg border border-border py-1 z-50">
                           {repos.map((repo) => (
                             <button
                               key={repo.id}
@@ -403,10 +407,10 @@ function HomeContent({
                               }`}
                             >
                               <div className="flex flex-col items-start text-left">
-                                <span className="font-medium truncate max-w-[200px]">
+                                <span className="font-medium truncate max-w-[180px] sm:max-w-[200px]">
                                   {repo.name}
                                 </span>
-                                <span className="text-xs text-secondary-foreground truncate max-w-[200px]">
+                                <span className="text-xs text-secondary-foreground truncate max-w-[180px] sm:max-w-[200px]">
                                   {repo.owner}
                                   {repo.private && " • private"}
                                 </span>
@@ -427,11 +431,13 @@ function HomeContent({
                         className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed transition"
                       >
                         <ModelIcon />
-                        <span>{formatModelNameLower(selectedModel)}</span>
+                        <span className="truncate max-w-[100px] sm:max-w-none">
+                          {formatModelNameLower(selectedModel)}
+                        </span>
                       </button>
 
                       {modelDropdownOpen && (
-                        <div className="absolute bottom-full left-0 mb-2 w-56 bg-background shadow-lg border border-border py-1 z-50">
+                        <div className="absolute bottom-full left-0 mb-2 w-64 sm:w-56 bg-background shadow-lg border border-border py-1 z-50">
                           {MODEL_OPTIONS.map((group, groupIdx) => (
                             <div key={group.category}>
                               <div
@@ -480,7 +486,7 @@ function HomeContent({
                   </div>
 
                   {/* Right side - Agent label */}
-                  <span className="text-sm text-muted-foreground">build agent</span>
+                  <span className="text-sm text-muted-foreground flex-shrink-0">build agent</span>
                 </div>
               </div>
 

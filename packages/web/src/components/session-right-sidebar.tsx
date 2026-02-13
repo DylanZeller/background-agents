@@ -46,6 +46,8 @@ interface SessionRightSidebarProps {
   events: SandboxEvent[];
   artifacts: Artifact[];
   filesChanged?: FileChange[];
+  onClose?: () => void;
+  isMobile?: boolean;
 }
 
 export function SessionRightSidebar({
@@ -54,6 +56,8 @@ export function SessionRightSidebar({
   events,
   artifacts,
   filesChanged = [],
+  onClose,
+  isMobile,
 }: SessionRightSidebarProps) {
   // Extract latest tasks from TodoWrite events
   const tasks = useMemo(() => extractLatestTasks(events), [events]);
@@ -73,7 +77,23 @@ export function SessionRightSidebar({
   }
 
   return (
-    <aside className="w-80 border-l border-border-muted overflow-y-auto hidden lg:block">
+    <aside
+      className={`w-80 h-full border-l border-border-muted overflow-y-auto bg-background ${isMobile ? "" : "hidden lg:block"}`}
+    >
+      {/* Mobile close button */}
+      {isMobile && onClose && (
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border-muted lg:hidden">
+          <h2 className="font-medium text-foreground">Session Details</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition"
+            aria-label="Close sidebar"
+          >
+            <CloseIcon />
+          </button>
+        </div>
+      )}
+
       {/* Participants */}
       <div className="px-4 py-4 border-b border-border-muted">
         <ParticipantsSection participants={participants} />
@@ -115,5 +135,22 @@ export function SessionRightSidebar({
         </div>
       )}
     </aside>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
   );
 }

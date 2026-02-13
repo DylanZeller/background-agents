@@ -36,9 +36,9 @@ function SettingsContent() {
         </header>
       )}
 
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 flex flex-col sm:flex-row overflow-hidden">
         <SettingsNav activeCategory={activeCategory} onSelect={setActiveCategory} />
-        <div className="flex-1 overflow-y-auto p-8">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8">
           <div className="max-w-2xl">
             {activeCategory === "secrets" && <SecretsSettings />}
             {activeCategory === "data-controls" && <DataControlsSettings />}
