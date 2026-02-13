@@ -27,9 +27,31 @@ interface SettingsNavProps {
 
 export function SettingsNav({ activeCategory, onSelect }: SettingsNavProps) {
   return (
-    <nav className="w-48 flex-shrink-0 border-r border-border-muted p-4">
-      <h2 className="text-lg font-semibold text-foreground mb-4">Settings</h2>
-      <ul className="space-y-1">
+    <nav className="w-full sm:w-48 flex-shrink-0 border-b sm:border-b-0 sm:border-r border-border-muted p-4">
+      <h2 className="text-lg font-semibold text-foreground mb-4 hidden sm:block">Settings</h2>
+      {/* Mobile: horizontal nav */}
+      <div className="flex sm:hidden gap-2 overflow-x-auto pb-2">
+        {NAV_ITEMS.map((item) => {
+          const isActive = activeCategory === item.id;
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.id}
+              onClick={() => onSelect(item.id)}
+              className={`flex items-center gap-2 px-3 py-2 text-sm rounded transition whitespace-nowrap ${
+                isActive
+                  ? "text-foreground bg-muted font-medium"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+              }`}
+            >
+              <Icon />
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+      {/* Desktop: vertical nav */}
+      <ul className="hidden sm:block space-y-1">
         {NAV_ITEMS.map((item) => {
           const isActive = activeCategory === item.id;
           const Icon = item.icon;

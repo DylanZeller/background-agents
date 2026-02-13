@@ -4,15 +4,24 @@ import { useState, useEffect, useCallback } from "react";
 
 const SIDEBAR_STORAGE_KEY = "open-inspect-sidebar-open";
 
+function getIsMobile() {
+  if (typeof window === "undefined") return false;
+  return window.matchMedia("(max-width: 1023px)").matches;
+}
+
 export function useSidebar() {
   const [isOpen, setIsOpen] = useState(true);
   const [isHydrated, setIsHydrated] = useState(false);
 
   // Load initial state from localStorage after hydration
+  // On mobile, default to closed
   useEffect(() => {
     const stored = localStorage.getItem(SIDEBAR_STORAGE_KEY);
     if (stored !== null) {
       setIsOpen(stored === "true");
+    } else {
+      // Default to closed on mobile
+      setIsOpen(!getIsMobile());
     }
     setIsHydrated(true);
   }, []);

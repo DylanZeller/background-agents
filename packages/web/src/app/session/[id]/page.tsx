@@ -2,7 +2,7 @@
 
 import { useSession } from "next-auth/react";
 import { useParams, useRouter } from "next/navigation";
-import { useState, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
+import { useState, useRef, useLayoutEffect, useCallback, useMemo, useEffect } from "react";
 import { useSessionSocket } from "@/hooks/use-session-socket";
 import { SafeMarkdown } from "@/components/safe-markdown";
 import { ToolCallGroup } from "@/components/tool-call-group";
@@ -331,6 +331,7 @@ function SessionContent({
   loadOlderEvents: () => void;
 }) {
   const { isOpen, toggle } = useSidebarContext();
+  const [rightSidebarOpen, setRightSidebarOpen] = useState(false);
 
   // Scroll pagination refs
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -429,31 +430,50 @@ function SessionContent({
     return groupEvents(filteredEvents.filter(Boolean) as SandboxEvent[]);
   }, [events]);
 
+  // Close right sidebar on escape
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && rightSidebarOpen) {
+        setRightSidebarOpen(false);
+      }
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [rightSidebarOpen]);
+
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
       <header className="border-b border-border-muted flex-shrink-0">
-        <div className="px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="px-4 py-3 flex items-center justify-between min-w-0">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
             {!isOpen && (
               <button
                 onClick={toggle}
-                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition"
+                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition flex-shrink-0"
                 title="Open sidebar"
               >
                 <SidebarToggleIcon />
               </button>
             )}
-            <div>
-              <h1 className="font-medium text-foreground">
+            <div className="min-w-0 flex-1">
+              <h1 className="font-medium text-foreground truncate">
                 {sessionState?.title || `${sessionState?.repoOwner}/${sessionState?.repoName}`}
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground truncate">
                 {sessionState?.repoOwner}/{sessionState?.repoName}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0 ml-2">
+            {/* Mobile: right sidebar toggle */}
+            <button
+              onClick={() => setRightSidebarOpen(true)}
+              className="lg:hidden p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted transition"
+              title="Show details"
+            >
+              <InfoIcon />
+            </button>
             {/* Mobile: single combined status dot */}
             <div className="md:hidden">
               <CombinedStatusDot
@@ -486,7 +506,7 @@ function SessionContent({
       )}
 
       {/* Main content */}
-      <main className="flex-1 flex overflow-hidden">
+      <main className="flex-1 flex overflow-hidden relative">
         {/* Event timeline */}
         <div
           ref={scrollContainerRef}
@@ -516,13 +536,34 @@ function SessionContent({
           </div>
         </div>
 
-        {/* Right sidebar */}
+        {/* Desktop: Right sidebar */}
         <SessionRightSidebar
           sessionState={sessionState}
           participants={participants}
           events={events}
           artifacts={artifacts}
         />
+
+        {/* Mobile: Right sidebar overlay */}
+        {rightSidebarOpen && (
+          <>
+            <div
+              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+              onClick={() => setRightSidebarOpen(false)}
+              aria-hidden="true"
+            />
+            <div className="fixed inset-y-0 right-0 z-50 lg:hidden">
+              <SessionRightSidebar
+                sessionState={sessionState}
+                participants={participants}
+                events={events}
+                artifacts={artifacts}
+                onClose={() => setRightSidebarOpen(false)}
+                isMobile={true}
+              />
+            </div>
+          </>
+        )}
       </main>
 
       {/* Input */}
@@ -588,9 +629,9 @@ function SessionContent({
             </div>
 
             {/* Footer row with model selector, reasoning pills, and agent label */}
-            <div className="flex items-center justify-between px-4 py-2 border-t border-border-muted">
+            <div className="flex items-center justify-between px-4 py-2 border-t border-border-muted gap-2 flex-wrap sm:flex-nowrap">
               {/* Left side - Model selector + Reasoning pills */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 sm:gap-4 flex-wrap flex-1 min-w-0">
                 <div className="relative" ref={modelDropdownRef}>
                   <button
                     type="button"
@@ -665,6 +706,24 @@ function SidebarToggleIcon() {
     >
       <rect x="3" y="3" width="18" height="18" rx="2" />
       <line x1="9" y1="3" x2="9" y2="21" />
+    </svg>
+  );
+}
+
+function InfoIcon() {
+  return (
+    <svg
+      className="w-4 h-4"
+      fill="none"
+      stroke="currentColor"
+      viewBox="0 0 24 24"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <circle cx="12" cy="12" r="10" />
+      <line x1="12" y1="16" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12.01" y2="8" />
     </svg>
   );
 }

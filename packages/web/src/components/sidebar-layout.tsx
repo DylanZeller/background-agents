@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect } from "react";
 import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { SessionSidebar } from "./session-sidebar";
@@ -31,6 +31,17 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const sidebar = useSidebar();
+
+  // Handle escape key and mobile overlay click
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && sidebar.isOpen) {
+        sidebar.close();
+      }
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [sidebar]);
 
   // Show loading state
   if (status === "loading") {
@@ -67,10 +78,19 @@ export function SidebarLayout({ children }: SidebarLayoutProps) {
   return (
     <SidebarContext.Provider value={sidebar}>
       <div className="flex h-screen overflow-hidden">
+        {/* Mobile overlay backdrop */}
+        {sidebar.isOpen && (
+          <div
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={sidebar.close}
+            aria-hidden="true"
+          />
+        )}
+
         {/* Sidebar with transition */}
         <div
-          className={`transition-all duration-200 ease-in-out ${
-            sidebar.isOpen ? "w-72" : "w-0"
+          className={`fixed lg:static inset-y-0 left-0 z-50 transition-all duration-200 ease-in-out ${
+            sidebar.isOpen ? "w-72 translate-x-0" : "w-0 -translate-x-full lg:translate-x-0"
           } flex-shrink-0 overflow-hidden`}
         >
           <SessionSidebar
