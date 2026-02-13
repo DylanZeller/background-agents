@@ -23,8 +23,8 @@ SANDBOX_DIR = Path(__file__).parent.parent / "sandbox"
 OPENCODE_VERSION = "latest"
 
 # Cache buster - change this to force Modal image rebuild
-# v38: Fixed fastapi[standard] for web endpoints
-CACHE_BUSTER = "v38-fastapi-standard-fix"
+# v40: Auto-update opencode version tracking
+CACHE_BUSTER = "v40-opencode-auto-update"
 
 # Base image with all development tools
 base_image = (

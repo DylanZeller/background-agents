@@ -1,0 +1,83 @@
+name: Check OpenCode Updates
+
+on:
+  schedule:
+    - cron: "0 0 * * 0" # Weekly (Sunday midnight UTC)
+  workflow_dispatch: # Manual trigger
+
+jobs:
+  check-update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Check latest opencode-ai versions
+        id: check
+        run: |
+          latest_opencode=$(npm view opencode-ai version)
+          latest_plugin=$(npm view @opencode-ai/plugin version)
+
+          current_opencode=$(grep "^opencode-ai=" .opencode-version | cut -d= -f2)
+          current_plugin=$(grep "^@opencode-ai/plugin=" .opencode-version | cut -d= -f2)
+
+          echo "latest_opencode=$latest_opencode" >> $GITHUB_OUTPUT
+          echo "latest_plugin=$latest_plugin" >> $GITHUB_OUTPUT
+          echo "current_opencode=$current_opencode" >> $GITHUB_OUTPUT
+          echo "current_plugin=$current_plugin" >> $GITHUB_OUTPUT
+
+          if [ "$latest_opencode" != "$current_opencode" ] || [ "$latest_plugin" != "$current_plugin" ]; then
+            echo "update=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update versions if new release detected
+        if: steps.check.outputs.update == 'true'
+        run: |
+          echo "opencode-ai=${{ steps.check.outputs.latest_opencode }}" > .opencode-version
+          echo "@opencode-ai/plugin=${{ steps.check.outputs.latest_plugin }}" >> .opencode-version
+
+      - name: Update CACHE_BUSTER if versions changed
+        if: steps.check.outputs.update == 'true'
+        run: |
+          new_cache_buster="v40-opencode-${{ steps.check.outputs.latest_opencode }}"
+          sed -i "s/^CACHE_BUSTER = \".*\"/CACHE_BUSTER = \"$new_cache_buster\"/" \
+            packages/modal-infra/src/images/base.py
+
+      - name: Create PR with updates
+        if: steps.check.outputs.update == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const currentOpencode = `${{ steps.check.outputs.current_opencode }}`;
+            const latestOpencode = `${{ steps.check.outputs.latest_opencode }}`;
+            const currentPlugin = `${{ steps.check.outputs.current_plugin }}`;
+            const latestPlugin = `${{ steps.check.outputs.latest_plugin }}`;
+
+            let body = `Updates OpenCode packages:\n\n`;
+            if (currentOpencode !== latestOpencode) {
+              body += `- opencode-ai: ${currentOpencode} → ${latestOpencode}\n`;
+            }
+            if (currentPlugin !== latestPlugin) {
+              body += `- @opencode-ai/plugin: ${currentPlugin} → ${latestPlugin}\n`;
+            }
+            body += `\nThis PR bumps CACHE_BUSTER to trigger a Modal image rebuild with the latest versions.`;
+
+            const { data: pr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `chore: update opencode to ${latestOpencode}`,
+              head: "opencode-update",
+              base: "main",
+              body: body
+            });
+
+            console.log(`Created PR #${pr.number}: ${pr.html_url}`);
+
+      - name: Report no updates
+        if: steps.check.outputs.update != 'true'
+        run: |
+          echo "OpenCode packages are up to date:"
+          echo "  opencode-ai: ${{ steps.check.outputs.current_opencode }}"
+          echo "  @opencode-ai/plugin: ${{ steps.check.outputs.current_plugin }}"
